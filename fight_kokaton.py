@@ -165,6 +165,34 @@ class Score:
         screen.blit(score_img, [100, HEIGHT - 50])  # 画面左下にスコア表示
 
 
+class Explosion:
+    """
+    爆発エフェクトを表現するクラス
+    """
+    def __init__(self, center: tuple[int, int]):
+        """
+        爆発の初期化
+        引数 center: 爆発の中心座標
+        """
+        self.imgs = [pg.image.load("fig/explosion.gif"), pg.transform.flip(pg.image.load("fig/explosion.gif"), True, False)]
+        self.rct = self.imgs[0].get_rect()
+        self.rct.center = center
+        self.life = 20  # 爆発が表示される時間 (フレーム数)
+        self.current_img_idx = 0
+
+    def update(self, screen: pg.Surface):
+        """
+        爆発エフェクトを更新し、描画する
+        引数 screen: 画面Surface
+        """
+        self.life -= 1
+        if self.life > 0:
+            self.current_img_idx = (self.current_img_idx + 1) % 2  # 爆発画像を交互に切り替える
+            screen.blit(self.imgs[self.current_img_idx], self.rct)
+        return self.life
+
+
+
 def main():
     pg.display.set_caption("たたかえ！こうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))    
@@ -173,6 +201,7 @@ def main():
     beams = []
     score = Score()  # スコアの初期化
     bombs =[Bomb((255, 0, 0), 10) for _ in range(NUM_OF_BOMBS)]
+    explosions = []  # 爆発エフェクトのリスト
     clock = pg.time.Clock()
     tmr = 0
     while True:
@@ -203,10 +232,11 @@ def main():
                             beams[k], bombs[j] = None, None
                             bird.change_img(6 , screen)
                             score.score += 1
+                            explosions.append(Explosion(bomb.rct.center))
                             pg.display.update() 
-        bombs = [bomb for bomb in bombs if bomb is not None]
-        #beams = [beam for beam in beams if beam is not None and beam.update(screen)]
-        beams = [beam for beam in beams if beam is not None]  
+        bombs = [bomb for bomb in bombs if bomb is not None]  # コードの内容
+        beams = [beam for beam in beams if beam is not None]  # コードの内容
+        explosions = [explosion for explosion in explosions if explosion is not None]  
 
         key_lst = pg.key.get_pressed()
         bird.update(key_lst, screen)
@@ -215,6 +245,7 @@ def main():
         for bomb in bombs:
             bomb.update(screen)
         score.update(screen)
+        explosion.update(screen)
         pg.display.update()
         tmr += 1
         clock.tick(50) 
